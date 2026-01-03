@@ -1,35 +1,137 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route, Navigate } from 'react-router-dom';
+import EmployeeProfile from './components/EmployeeProfile';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './components/Login';
+import Signup from './components/Signup';
+import AdminDashboard from './components/AdminDashboard';
+import EmployeeDashboard from './components/EmployeeDashboard';
+import LandingPage from './components/LandingPage';
+import EmployeeManagement from './components/EmployeeManagement';
+import Attendance from './components/Attendance';
+import TimeOff from './components/TimeOff';
+import Employees from './components/Employees';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <AuthProvider>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        
+        {/* Protected routes for ADMIN and HR */}
+        <Route 
+          path="/admin-dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Employee Management route for ADMIN and HR */}
+        <Route 
+          path="/employee-management" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
+              <EmployeeManagement />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Redirect from old employee dashboard to new employees page */}
+        <Route 
+          path="/employee-dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <Navigate to="/employee/employees" replace />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Employees route for EMPLOYEE */}
+        <Route 
+          path="/employees" 
+          element={
+            <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <Employees />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Attendance route for EMPLOYEE */}
+        <Route 
+          path="/attendance" 
+          element={
+            <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <Attendance />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Time Off route for EMPLOYEE */}
+        <Route 
+          path="/time-off" 
+          element={
+            <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <TimeOff />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Employee routes */}
+        <Route 
+          path="/employee/employees" 
+          element={
+            <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <Employees />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/employee/attendance" 
+          element={
+            <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <Attendance />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/employee/timeoff" 
+          element={
+            <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <TimeOff />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Employee Profile route for EMPLOYEE */}
+        <Route 
+          path="/employee/profile/:employeeId" 
+          element={
+            <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <EmployeeProfile />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* My Profile route for EMPLOYEE */}
+        <Route 
+          path="/employee/profile" 
+          element={
+            <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <EmployeeProfile />
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
