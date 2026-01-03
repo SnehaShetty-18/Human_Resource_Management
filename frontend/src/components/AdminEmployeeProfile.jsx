@@ -1,22 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-function EmployeeProfile() {
-  const { employeeId: routeEmployeeId } = useParams();
+function AdminEmployeeProfile() {
+  const { employeeId } = useParams();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState('resume');
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Check if user is authenticated and has admin role, if not redirect to login
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'HR')) {
+    navigate('/login');
+    return null;
+  }
+
+  // Mock employee data for the profile
   const [profileData, setProfileData] = useState({
-    // Basic Info
     name: 'John Doe',
-    position: 'Software Developer',
+    loginId: 'johndoe',
     email: 'john.doe@company.com',
     mobile: '+1 234 567 8900',
+    company: 'Dayflow Inc.',
     department: 'Engineering',
     manager: 'Jane Smith',
     location: 'New York, NY',
+    avatar: 'JD',
     
     // Resume Tab
     about: 'Experienced software developer with expertise in React, Node.js, and modern web technologies. Passionate about creating efficient and user-friendly applications.',
@@ -42,40 +52,33 @@ function EmployeeProfile() {
     employeeCode: 'EMP001',
     
     // Salary Info (for admin view)
-    basicSalary: 75000,
-    hra: 22500,
-    da: 7500,
-    bonus: 5000,
-    deductions: 8000
+    monthlyWage: 50000,
+    yearlyWage: 600000,
+    workingDays: 5,
+    breakTime: 1,
+    salaryComponents: [
+      { name: 'Basic Salary', amount: 25000, percentage: 50 },
+      { name: 'House Rent Allowance (HRA)', amount: 10000, percentage: 20 },
+      { name: 'Standard Allowance', amount: 5000, percentage: 10 },
+      { name: 'Performance Bonus', amount: 2500, percentage: 5 },
+      { name: 'Leave Travel Allowance (LTA)', amount: 2500, percentage: 5 },
+      { name: 'Fixed Allowance', amount: 5000, percentage: 10 }
+    ]
   });
 
-  // Check if user is authenticated, if not redirect to login
-  if (!user) {
-    navigate('/login');
-    return null;
-  }
+  const toggleProfileDropdown = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
 
-  // Check if viewing own profile or if admin
-  const isOwnProfile = routeEmployeeId ? routeEmployeeId === user.employeeId : true;
-  const isAdmin = user.role === 'ADMIN' || user.role === 'HR';
+  const handleProfileClick = () => {
+    setShowProfileDropdown(false);
+    // Navigate to the profile page
+    navigate('/employee/profile');
+  };
 
-  // If not viewing own profile and not admin, redirect
-  if (!isOwnProfile && !isAdmin) {
-    navigate('/employee/employees');
-    return null;
-  }
-
-  // Use the appropriate employee data based on route and permissions
-  const employee = {
-    id: routeEmployeeId || user?.employeeId || 'EMP001',
-    name: profileData.name,
-    position: profileData.position,
-    email: profileData.email,
-    mobile: profileData.mobile,
-    department: profileData.department,
-    manager: profileData.manager,
-    location: profileData.location,
-    avatar: (routeEmployeeId || user?.employeeId)?.charAt(0).toUpperCase() || 'U'
+  const handleLogout = () => {
+    setShowProfileDropdown(false);
+    logout();
   };
 
   const handleTabChange = (tab) => {
@@ -99,19 +102,8 @@ function EmployeeProfile() {
     alert(`${section} updated successfully!`);
   };
 
-  const toggleProfileDropdown = () => {
-    setShowProfileDropdown(!showProfileDropdown);
-  };
-
-  const handleProfileClick = () => {
-    setShowProfileDropdown(false);
-    // Navigate to the profile page
-    navigate('/employee/profile');
-  };
-
-  const handleLogout = () => {
-    setShowProfileDropdown(false);
-    logout();
+  const toggleEdit = () => {
+    setIsEditing(!isEditing);
   };
 
   const getStatusColor = (status) => {
@@ -140,12 +132,11 @@ function EmployeeProfile() {
     }
   };
 
-  // Navigation items for employee
+  // Navigation items for admin
   const navItems = [
-    { name: 'Employees', path: '/employee/employees' },
-    { name: 'Attendance', path: '/employee/attendance' },
-    { name: 'Time Off', path: '/employee/timeoff' },
-    { name: 'My Profile', path: '/employee/profile' }
+    { name: 'Employees', path: '/admin-employees' },
+    { name: 'Attendance', path: '/admin-dashboard' },
+    { name: 'Time Off', path: '/admin-dashboard' }
   ];
 
   // Function to determine active tab
@@ -154,7 +145,7 @@ function EmployeeProfile() {
   };
 
   return (
-    <div className="employee-dashboard">
+    <div className="admin-employee-profile">
       {/* Top Navigation Bar */}
       <nav className="top-nav">
         <div className="nav-left">
@@ -176,13 +167,14 @@ function EmployeeProfile() {
               <span className="avatar-initials">
                 {user?.employeeId?.charAt(0).toUpperCase() || 'U'}
               </span>
+              <div className="status-dot" style={{ backgroundColor: '#28a745' }}></div>
             </div>
           </div>
           
           {showProfileDropdown && (
             <div className="profile-dropdown">
               <ul>
-                <li onClick={handleProfileClick}>View Profile</li>
+                <li onClick={handleProfileClick}>My Profile</li>
                 <li onClick={handleLogout}>Log Out</li>
               </ul>
             </div>
@@ -191,10 +183,10 @@ function EmployeeProfile() {
       </nav>
 
       {/* Main Content */}
-      <div className="dashboard-content-employee">
-        <header className="dashboard-header-employee">
+      <div className="dashboard-content-admin">
+        <header className="dashboard-header-admin">
           <h1>Employee Profile</h1>
-          <p>Manage your personal information</p>
+          <p>Manage employee information</p>
         </header>
         
         <div className="profile-container">
@@ -202,36 +194,98 @@ function EmployeeProfile() {
             {/* Profile Header */}
             <div className="profile-header">
               <div className="profile-avatar-large">
-                <span className="avatar-initials">{employee.avatar}</span>
+                <span className="avatar-initials">{profileData.avatar}</span>
+                <button className="edit-icon" onClick={toggleEdit}>
+                  {isEditing ? '✓' : '✏️'}
+                </button>
               </div>
               <div className="profile-basic-info">
-                <h2>{employee.name}</h2>
-                <p className="designation">{employee.position}</p>
-                <p className="department">{employee.department}</p>
-              </div>
-            </div>
-            
-            {/* Profile Details */}
-            <div className="profile-details">
-              <div className="profile-section">
-                <div className="profile-row">
-                  <div className="profile-field">
-                    <label>Email</label>
-                    <p>{employee.email}</p>
+                <h2>{profileData.name}</h2>
+                <div className="profile-fields">
+                  <div className="profile-field-row">
+                    <div className="profile-field">
+                      <label>Login ID</label>
+                      <input 
+                        type="text" 
+                        name="loginId" 
+                        value={profileData.loginId}
+                        onChange={(e) => setProfileData({...profileData, loginId: e.target.value})}
+                        disabled={!isEditing}
+                        className="form-control"
+                      />
+                    </div>
+                    <div className="profile-field">
+                      <label>Email</label>
+                      <input 
+                        type="email" 
+                        name="email" 
+                        value={profileData.email}
+                        onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                        disabled={!isEditing}
+                        className="form-control"
+                      />
+                    </div>
                   </div>
-                  <div className="profile-field">
-                    <label>Mobile</label>
-                    <p>{employee.mobile}</p>
+                  <div className="profile-field-row">
+                    <div className="profile-field">
+                      <label>Mobile</label>
+                      <input 
+                        type="text" 
+                        name="mobile" 
+                        value={profileData.mobile}
+                        onChange={(e) => setProfileData({...profileData, mobile: e.target.value})}
+                        disabled={!isEditing}
+                        className="form-control"
+                      />
+                    </div>
+                    <div className="profile-field">
+                      <label>Company</label>
+                      <input 
+                        type="text" 
+                        name="company" 
+                        value={profileData.company}
+                        onChange={(e) => setProfileData({...profileData, company: e.target.value})}
+                        disabled={!isEditing}
+                        className="form-control"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="profile-row">
-                  <div className="profile-field">
-                    <label>Manager</label>
-                    <p>{employee.manager}</p>
+                  <div className="profile-field-row">
+                    <div className="profile-field">
+                      <label>Department</label>
+                      <input 
+                        type="text" 
+                        name="department" 
+                        value={profileData.department}
+                        onChange={(e) => setProfileData({...profileData, department: e.target.value})}
+                        disabled={!isEditing}
+                        className="form-control"
+                      />
+                    </div>
+                    <div className="profile-field">
+                      <label>Manager</label>
+                      <input 
+                        type="text" 
+                        name="manager" 
+                        value={profileData.manager}
+                        onChange={(e) => setProfileData({...profileData, manager: e.target.value})}
+                        disabled={!isEditing}
+                        className="form-control"
+                      />
+                    </div>
                   </div>
-                  <div className="profile-field">
-                    <label>Location</label>
-                    <p>{employee.location}</p>
+                  <div className="profile-field-row">
+                    <div className="profile-field">
+                      <label>Location</label>
+                      <input 
+                        type="text" 
+                        name="location" 
+                        value={profileData.location}
+                        onChange={(e) => setProfileData({...profileData, location: e.target.value})}
+                        disabled={!isEditing}
+                        className="form-control"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -253,7 +307,7 @@ function EmployeeProfile() {
               >
                 Private Info
               </button>
-              {(isAdmin || user.role === 'ADMIN' || user.role === 'HR') && (
+              {(user.role === 'ADMIN' || user.role === 'HR') && (
                 <button 
                   className={`tab-button ${activeTab === 'salary' ? 'active' : ''}`}
                   onClick={() => handleTabChange('salary')}
@@ -261,12 +315,6 @@ function EmployeeProfile() {
                   Salary Info
                 </button>
               )}
-              <button 
-                className={`tab-button ${activeTab === 'security' ? 'active' : ''}`}
-                onClick={() => handleTabChange('security')}
-              >
-                Security
-              </button>
             </div>
             
             {/* Tab Content */}
@@ -279,11 +327,11 @@ function EmployeeProfile() {
                       name="about" 
                       value={profileData.about}
                       onChange={(e) => setProfileData({...profileData, about: e.target.value})}
-                      disabled={!isOwnProfile}
+                      disabled={!isEditing}
                       className="form-control"
                       rows="4"
                     />
-                    {isOwnProfile && (
+                    {isEditing && (
                       <button className="btn btn-primary" onClick={() => handleSave('about')}>
                         Save About
                       </button>
@@ -325,7 +373,7 @@ function EmployeeProfile() {
                         name="dob" 
                         value={profileData.dob}
                         onChange={(e) => setProfileData({...profileData, dob: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                       />
                     </div>
@@ -335,7 +383,7 @@ function EmployeeProfile() {
                         name="address" 
                         value={profileData.address}
                         onChange={(e) => setProfileData({...profileData, address: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                         rows="3"
                       />
@@ -347,7 +395,7 @@ function EmployeeProfile() {
                         name="nationality" 
                         value={profileData.nationality}
                         onChange={(e) => setProfileData({...profileData, nationality: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                       />
                     </div>
@@ -358,7 +406,7 @@ function EmployeeProfile() {
                         name="personalEmail" 
                         value={profileData.personalEmail}
                         onChange={(e) => setProfileData({...profileData, personalEmail: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                       />
                     </div>
@@ -369,7 +417,7 @@ function EmployeeProfile() {
                           name="gender" 
                           value={profileData.gender}
                           onChange={(e) => setProfileData({...profileData, gender: e.target.value})}
-                          disabled={!isOwnProfile}
+                          disabled={!isEditing}
                           className="form-control"
                         >
                           <option value="Male">Male</option>
@@ -383,7 +431,7 @@ function EmployeeProfile() {
                           name="maritalStatus" 
                           value={profileData.maritalStatus}
                           onChange={(e) => setProfileData({...profileData, maritalStatus: e.target.value})}
-                          disabled={!isOwnProfile}
+                          disabled={!isEditing}
                           className="form-control"
                         >
                           <option value="Single">Single</option>
@@ -404,7 +452,7 @@ function EmployeeProfile() {
                         name="dateOfJoining" 
                         value={profileData.dateOfJoining}
                         onChange={(e) => setProfileData({...profileData, dateOfJoining: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                       />
                     </div>
@@ -415,7 +463,7 @@ function EmployeeProfile() {
                         name="employeeCode" 
                         value={profileData.employeeCode}
                         onChange={(e) => setProfileData({...profileData, employeeCode: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                       />
                     </div>
@@ -430,7 +478,7 @@ function EmployeeProfile() {
                         name="accountNumber" 
                         value={profileData.accountNumber}
                         onChange={(e) => setProfileData({...profileData, accountNumber: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                       />
                     </div>
@@ -441,7 +489,7 @@ function EmployeeProfile() {
                         name="bankName" 
                         value={profileData.bankName}
                         onChange={(e) => setProfileData({...profileData, bankName: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                       />
                     </div>
@@ -452,7 +500,7 @@ function EmployeeProfile() {
                         name="ifscCode" 
                         value={profileData.ifscCode}
                         onChange={(e) => setProfileData({...profileData, ifscCode: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                       />
                     </div>
@@ -467,7 +515,7 @@ function EmployeeProfile() {
                         name="panNumber" 
                         value={profileData.panNumber}
                         onChange={(e) => setProfileData({...profileData, panNumber: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                       />
                     </div>
@@ -478,13 +526,13 @@ function EmployeeProfile() {
                         name="uanNumber" 
                         value={profileData.uanNumber}
                         onChange={(e) => setProfileData({...profileData, uanNumber: e.target.value})}
-                        disabled={!isOwnProfile}
+                        disabled={!isEditing}
                         className="form-control"
                       />
                     </div>
                   </div>
                   
-                  {isOwnProfile && (
+                  {isEditing && (
                     <button className="btn btn-primary" onClick={() => handleSave('privateInfo')}>
                       Save Private Info
                     </button>
@@ -495,71 +543,152 @@ function EmployeeProfile() {
               {activeTab === 'salary' && (
                 <div className="tab-pane">
                   <div className="tab-section">
-                    <h3>Salary Information</h3>
-                    <div className="salary-breakdown">
-                      <div className="salary-item">
-                        <span>Basic Salary:</span>
-                        <span className="salary-value">${profileData.basicSalary.toLocaleString()}</span>
+                    <h3>Salary Summary</h3>
+                    <div className="salary-summary">
+                      <div className="form-group">
+                        <label>Monthly Wage</label>
+                        <input 
+                          type="number" 
+                          name="monthlyWage" 
+                          value={profileData.monthlyWage || 50000}
+                          onChange={(e) => {
+                            const newWage = parseInt(e.target.value) || 0;
+                            setProfileData(prev => {
+                              const updatedData = { ...prev, monthlyWage: newWage };
+                              // Auto-calculate components based on wage
+                              updatedData.basicSalary = Math.round(newWage * 0.5); // 50% of wage
+                              updatedData.hra = Math.round(newWage * 0.2); // 20% of wage
+                              updatedData.standardAllowance = Math.round(newWage * 0.1); // 10% of wage
+                              updatedData.performanceBonus = Math.round(newWage * 0.05); // 5% of wage
+                              updatedData.lta = Math.round(newWage * 0.05); // 5% of wage
+                              updatedData.fixedAllowance = newWage - (updatedData.basicSalary + updatedData.hra + updatedData.standardAllowance + updatedData.performanceBonus + updatedData.lta);
+                              return updatedData;
+                            });
+                          }}
+                          disabled={!isEditing}
+                          className="form-control"
+                        />
                       </div>
-                      <div className="salary-item">
-                        <span>HRA:</span>
-                        <span className="salary-value">${profileData.hra.toLocaleString()}</span>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Yearly Wage</label>
+                          <input 
+                            type="number" 
+                            name="yearlyWage" 
+                            value={profileData.yearlyWage || (profileData.monthlyWage * 12) || 600000}
+                            onChange={(e) => setProfileData({...profileData, yearlyWage: e.target.value})}
+                            disabled={!isEditing}
+                            className="form-control"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Working Days/Week</label>
+                          <input 
+                            type="number" 
+                            name="workingDays" 
+                            value={profileData.workingDays || 5}
+                            onChange={(e) => setProfileData({...profileData, workingDays: e.target.value})}
+                            disabled={!isEditing}
+                            className="form-control"
+                          />
+                        </div>
                       </div>
-                      <div className="salary-item">
-                        <span>DA:</span>
-                        <span className="salary-value">${profileData.da.toLocaleString()}</span>
-                      </div>
-                      <div className="salary-item">
-                        <span>Bonus:</span>
-                        <span className="salary-value">${profileData.bonus.toLocaleString()}</span>
-                      </div>
-                      <div className="salary-item">
-                        <span>Deductions:</span>
-                        <span className="salary-value">-${profileData.deductions.toLocaleString()}</span>
-                      </div>
-                      <div className="salary-item total">
-                        <span>Total:</span>
-                        <span className="salary-value">${(profileData.basicSalary + profileData.hra + profileData.da + profileData.bonus - profileData.deductions).toLocaleString()}</span>
+                      <div className="form-group">
+                        <label>Break Time (hours)</label>
+                        <input 
+                          type="number" 
+                          name="breakTime" 
+                          value={profileData.breakTime || 1}
+                          onChange={(e) => setProfileData({...profileData, breakTime: e.target.value})}
+                          disabled={!isEditing}
+                          className="form-control"
+                        />
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-              
-              {activeTab === 'security' && (
-                <div className="tab-pane">
+                  
                   <div className="tab-section">
-                    <h3>Security Settings</h3>
-                    <div className="form-group">
-                      <label>Current Password</label>
-                      <input 
-                        type="password" 
-                        name="currentPassword" 
-                        className="form-control"
-                        placeholder="Enter current password"
-                      />
+                    <h3>Salary Components</h3>
+                    <div className="salary-components">
+                      {profileData.salaryComponents.map((component, index) => (
+                        <div key={index} className="salary-component-row">
+                          <div className="form-group">
+                            <label>Name</label>
+                            <input 
+                              type="text" 
+                              name="name" 
+                              value={component.name}
+                              onChange={(e) => {
+                                const updatedComponents = [...profileData.salaryComponents];
+                                updatedComponents[index] = { ...component, name: e.target.value };
+                                setProfileData({ ...profileData, salaryComponents: updatedComponents });
+                              }}
+                              disabled={!isEditing}
+                              className="form-control"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Amount per Month</label>
+                            <input 
+                              type="number" 
+                              name="amount" 
+                              value={component.amount}
+                              onChange={(e) => {
+                                const updatedAmount = parseInt(e.target.value) || 0;
+                                const updatedComponents = [...profileData.salaryComponents];
+                                const updatedComponent = { ...component, amount: updatedAmount };
+                                
+                                // Calculate percentage based on monthly wage
+                                if (profileData.monthlyWage > 0) {
+                                  updatedComponent.percentage = Math.round((updatedAmount / profileData.monthlyWage) * 100);
+                                }
+                                
+                                updatedComponents[index] = updatedComponent;
+                                setProfileData({ ...profileData, salaryComponents: updatedComponents });
+                              }}
+                              disabled={!isEditing}
+                              className="form-control"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Percentage</label>
+                            <input 
+                              type="number" 
+                              name="percentage" 
+                              value={component.percentage}
+                              onChange={(e) => {
+                                const updatedPercentage = parseInt(e.target.value) || 0;
+                                const updatedComponents = [...profileData.salaryComponents];
+                                const updatedComponent = { ...component, percentage: updatedPercentage };
+                                
+                                // Calculate amount based on percentage and monthly wage
+                                updatedComponent.amount = Math.round((updatedPercentage / 100) * profileData.monthlyWage);
+                                
+                                updatedComponents[index] = updatedComponent;
+                                setProfileData({ ...profileData, salaryComponents: updatedComponents });
+                              }}
+                              disabled={!isEditing}
+                              className="form-control"
+                            />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="form-group">
-                      <label>New Password</label>
-                      <input 
-                        type="password" 
-                        name="newPassword" 
-                        className="form-control"
-                        placeholder="Enter new password"
-                      />
+                    <div className="salary-total">
+                      <div className="salary-item total">
+                        <span>Total:</span>
+                        <span className="salary-value">${profileData.salaryComponents.reduce((sum, component) => sum + component.amount, 0).toLocaleString()}</span>
+                      </div>
+                      {profileData.monthlyWage > 0 && (
+                        <div className="salary-item variance">
+                          <span>Variance:</span>
+                          <span className={`salary-value ${profileData.salaryComponents.reduce((sum, component) => sum + component.amount, 0) > profileData.monthlyWage ? 'exceeds' : 'within'}`}>
+                            ${Math.abs(profileData.salaryComponents.reduce((sum, component) => sum + component.amount, 0) - profileData.monthlyWage).toLocaleString()}
+                            {profileData.salaryComponents.reduce((sum, component) => sum + component.amount, 0) > profileData.monthlyWage ? ' over' : ' under'}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <div className="form-group">
-                      <label>Confirm New Password</label>
-                      <input 
-                        type="password" 
-                        name="confirmPassword" 
-                        className="form-control"
-                        placeholder="Confirm new password"
-                      />
-                    </div>
-                    <button className="btn btn-primary" onClick={() => handleSave('security')}>
-                      Change Password
-                    </button>
                   </div>
                 </div>
               )}
@@ -569,7 +698,7 @@ function EmployeeProfile() {
       </div>
 
       <style jsx>{`
-        .employee-dashboard {
+        .admin-employee-profile {
           min-height: 100vh;
           background: #f5f7fa;
           font-family: 'Roboto', sans-serif;
@@ -577,7 +706,7 @@ function EmployeeProfile() {
           flex-direction: column;
         }
         
-        .dashboard-content-employee {
+        .dashboard-content-admin {
           flex: 1;
           padding: 30px;
           max-width: 1200px;
@@ -606,10 +735,10 @@ function EmployeeProfile() {
           border-radius: 8px;
           margin-bottom: 20px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          text-align: center;
         }
         
         .profile-avatar-large {
+          position: relative;
           width: 100px;
           height: 100px;
           border-radius: 50%;
@@ -622,40 +751,40 @@ function EmployeeProfile() {
           color: white;
         }
         
+        .edit-icon {
+          position: absolute;
+          bottom: -5px;
+          right: -5px;
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          background: #2563eb;
+          color: white;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.8rem;
+        }
+        
         .profile-basic-info h2 {
-          margin: 0 0 5px 0;
+          margin: 0 0 20px 0;
           color: #333;
           font-size: 1.5rem;
+          text-align: center;
         }
         
-        .profile-basic-info .designation {
-          margin: 0 0 5px 0;
-          color: #6b7280;
-          font-size: 1rem;
+        .profile-fields {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
         }
         
-        .profile-basic-info .department {
-          margin: 0;
-          color: #9ca3af;
-          font-size: 0.9rem;
-        }
-        
-        .profile-details {
-          background: white;
-          padding: 20px;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .profile-section {
-          margin-bottom: 15px;
-        }
-        
-        .profile-row {
+        .profile-field-row {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 15px;
-          margin-bottom: 15px;
         }
         
         .profile-field {
@@ -670,9 +799,18 @@ function EmployeeProfile() {
           font-size: 0.9rem;
         }
         
-        .profile-field p {
-          margin: 0;
-          color: #6b7280;
+        .form-control {
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 4px;
+          font-size: 0.9rem;
+          box-sizing: border-box;
+        }
+        
+        .form-control:disabled {
+          background-color: #f9fafb;
+          cursor: not-allowed;
         }
         
         .profile-sidebar {
@@ -739,20 +877,6 @@ function EmployeeProfile() {
           color: #374151;
         }
         
-        .form-control {
-          width: 100%;
-          padding: 8px 12px;
-          border: 1px solid #d1d5db;
-          border-radius: 4px;
-          font-size: 0.9rem;
-          box-sizing: border-box;
-        }
-        
-        .form-control:disabled {
-          background-color: #f9fafb;
-          cursor: not-allowed;
-        }
-        
         .form-row {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -797,10 +921,24 @@ function EmployeeProfile() {
           font-size: 0.9rem;
         }
         
-        .salary-breakdown {
+        .salary-summary {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+        }
+        
+        .salary-components {
           display: flex;
           flex-direction: column;
           gap: 10px;
+        }
+        
+        .salary-component-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 15px;
+          padding: 10px 0;
+          border-bottom: 1px solid #f3f4f6;
         }
         
         .salary-item {
@@ -816,9 +954,28 @@ function EmployeeProfile() {
           border-bottom: none;
         }
         
+        .salary-item.variance {
+          font-weight: bold;
+          color: #ef4444;
+        }
+        
+        .salary-item.variance.within {
+          color: #22c55e;
+        }
+        
         .salary-value {
           color: #374151;
           font-weight: 500;
+        }
+        
+        .salary-value.exceeds {
+          color: #ef4444;
+        }
+        
+        .salary-total {
+          margin-top: 20px;
+          padding-top: 15px;
+          border-top: 1px solid #e5e7eb;
         }
         
         .btn {
@@ -843,7 +1000,7 @@ function EmployeeProfile() {
             grid-template-columns: 1fr;
           }
           
-          .profile-row {
+          .profile-field-row {
             grid-template-columns: 1fr;
           }
           
@@ -866,4 +1023,4 @@ function EmployeeProfile() {
   );
 }
 
-export default EmployeeProfile;
+export default AdminEmployeeProfile;

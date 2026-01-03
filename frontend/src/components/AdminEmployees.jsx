@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-function AdminDashboard() {
+function AdminEmployees() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -12,14 +12,6 @@ function AdminDashboard() {
     navigate('/login');
     return null;
   }
-
-  // Mock data for admin dashboard
-  const [dashboardData] = useState({
-    totalEmployees: 42,
-    totalDepartments: 8,
-    totalActiveEmployees: 38,
-    totalPendingRequests: 5
-  });
 
   // Mock employee data for the grid
   const [employees] = useState([
@@ -31,6 +23,10 @@ function AdminDashboard() {
     { id: 6, name: 'Sarah Brown', designation: 'Support Lead', department: 'Support', status: 'present', avatar: 'SB' },
     { id: 7, name: 'David Taylor', designation: 'Operations Manager', department: 'Operations', status: 'leave', avatar: 'DT' },
     { id: 8, name: 'Lisa Anderson', designation: 'Designer', department: 'Marketing', status: 'absent', avatar: 'LA' },
+    { id: 9, name: 'James Wilson', designation: 'Product Manager', department: 'Engineering', status: 'present', avatar: 'JW' },
+    { id: 10, name: 'Olivia Martin', designation: 'UX Designer', department: 'Marketing', status: 'present', avatar: 'OM' },
+    { id: 11, name: 'William Garcia', designation: 'QA Engineer', department: 'Engineering', status: 'leave', avatar: 'WG' },
+    { id: 12, name: 'Sophia Rodriguez', designation: 'Business Analyst', department: 'Strategy', status: 'absent', avatar: 'SR' },
   ]);
 
   const toggleProfileDropdown = () => {
@@ -49,8 +45,8 @@ function AdminDashboard() {
   };
 
   const handleEmployeeCardClick = (employeeId) => {
-    // Navigate to the specific employee's profile
-    navigate(`/employee/profile/${employeeId}`);
+    // Navigate to the specific employee's profile page in editable mode
+    navigate(`/admin/employee/${employeeId}`);
   };
 
   const getStatusColor = (status) => {
@@ -83,7 +79,7 @@ function AdminDashboard() {
   const navItems = [
     { name: 'Employees', path: '/admin-employees' },
     { name: 'Attendance', path: '/admin-dashboard' },
-    { name: 'Time Off', path: '/time-off' }
+    { name: 'Time Off', path: '/admin-dashboard' }
   ];
 
   // Function to determine active tab
@@ -92,7 +88,7 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="admin-dashboard">
+    <div className="admin-employees-dashboard">
       {/* Top Navigation Bar */}
       <nav className="top-nav">
         <div className="nav-left">
@@ -132,144 +128,39 @@ function AdminDashboard() {
       {/* Main Content */}
       <div className="dashboard-content-admin">
         <header className="dashboard-header-admin">
-          <h1>Admin Dashboard</h1>
-          <p>Welcome to the HR management system</p>
+          <h1>Employees</h1>
+          <p>Manage and view employee information</p>
         </header>
         
-        <div className="dashboard-layout">
-          <div className="dashboard-main">
-            {/* Dashboard Widgets */}
-            <div className="dashboard-widgets">
-              <div className="widget">
-                <div className="widget-icon">👥</div>
-                <div className="widget-info">
-                  <h3>Total Employees</h3>
-                  <p className="widget-value">{dashboardData.totalEmployees}</p>
-                </div>
-              </div>
-              
-              <div className="widget">
-                <div className="widget-icon">🏢</div>
-                <div className="widget-info">
-                  <h3>Total Departments</h3>
-                  <p className="widget-value">{dashboardData.totalDepartments}</p>
-                </div>
-              </div>
-              
-              <div className="widget">
-                <div className="widget-icon">✅</div>
-                <div className="widget-info">
-                  <h3>Active Employees</h3>
-                  <p className="widget-value">{dashboardData.totalActiveEmployees}</p>
-                </div>
-              </div>
-              
-              <div className="widget">
-                <div className="widget-icon">📝</div>
-                <div className="widget-info">
-                  <h3>Pending Requests</h3>
-                  <p className="widget-value">{dashboardData.totalPendingRequests}</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Employee Grid */}
-            <div className="section">
-              <h2>Team Members</h2>
-              <div className="employee-cards">
-                {employees.map(employee => (
+        <div className="employees-grid-container">
+          <div className="employee-cards">
+            {employees.map(employee => (
+              <div 
+                key={employee.id} 
+                className="employee-card"
+                onClick={() => handleEmployeeCardClick(employee.id)}
+              >
+                <div className="employee-avatar">
+                  <span className="avatar-initials">{employee.avatar}</span>
                   <div 
-                    key={employee.id} 
-                    className="employee-card"
-                    onClick={() => handleEmployeeCardClick(employee.id)}
-                  >
-                    <div className="employee-avatar">
-                      <span className="avatar-initials">{employee.avatar}</span>
-                      <div 
-                        className="status-indicator" 
-                        style={{ backgroundColor: getStatusColor(employee.status) }}
-                        title={getStatusText(employee.status)}
-                      ></div>
-                    </div>
-                    <div className="employee-info">
-                      <h3>{employee.name}</h3>
-                      <p>{employee.designation}</p>
-                      <p className="department">{employee.department}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          {/* Right Section */}
-          <div className="dashboard-section-right">
-            <div className="section">
-              <h2>Recent Activity</h2>
-              <div className="activity-list">
-                <div className="activity-item">
-                  <span className="activity-icon">✅</span>
-                  <div className="activity-details">
-                    <p>John Doe clocked in at 9:00 AM</p>
-                    <span className="activity-time">Today, 9:00 AM</span>
-                  </div>
+                    className="status-indicator" 
+                    style={{ backgroundColor: getStatusColor(employee.status) }}
+                    title={getStatusText(employee.status)}
+                  ></div>
                 </div>
-                <div className="activity-item">
-                  <span className="activity-icon">📝</span>
-                  <div className="activity-details">
-                    <p>Jane Smith's leave request for Jan 15 has been approved</p>
-                    <span className="activity-time">Yesterday</span>
-                  </div>
-                </div>
-                <div className="activity-item">
-                  <span className="activity-icon">💰</span>
-                  <div className="activity-details">
-                    <p>Payroll for December has been processed</p>
-                    <span className="activity-time">Dec 31</span>
-                  </div>
-                </div>
-                <div className="activity-item">
-                  <span className="activity-icon">👤</span>
-                  <div className="activity-details">
-                    <p>New employee David Wilson has been added</p>
-                    <span className="activity-time">Dec 28</span>
-                  </div>
+                <div className="employee-info">
+                  <h3>{employee.name}</h3>
+                  <p>{employee.designation}</p>
+                  <p className="department">{employee.department}</p>
                 </div>
               </div>
-            </div>
-            
-            <div className="section">
-              <h2>Pending Approvals</h2>
-              <div className="events-list">
-                <div className="event-item">
-                  <span className="event-date">{dashboardData.totalPendingRequests}</span>
-                  <div className="event-details">
-                    <p>Leave Requests</p>
-                    <span className="event-time">Pending Approval</span>
-                  </div>
-                </div>
-                <div className="event-item">
-                  <span className="event-date">2</span>
-                  <div className="event-details">
-                    <p>Expense Reports</p>
-                    <span className="event-time">Pending Approval</span>
-                  </div>
-                </div>
-                <div className="event-item">
-                  <span className="event-date">1</span>
-                  <div className="event-details">
-                    <p>Overtime Requests</p>
-                    <span className="event-time">Pending Approval</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        .admin-dashboard {
+        .admin-employees-dashboard {
           min-height: 100vh;
           background: #f5f7fa;
           font-family: 'Roboto', sans-serif;
@@ -285,20 +176,6 @@ function AdminDashboard() {
           width: 100%;
           display: flex;
           flex-direction: column;
-        }
-        
-        .dashboard-layout {
-          flex: 1;
-          display: grid;
-          grid-template-columns: 2fr 1fr;
-          gap: 20px;
-        }
-        
-        .dashboard-main {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-          min-height: 0;
         }
         
         .top-nav {
@@ -440,70 +317,19 @@ function AdminDashboard() {
           font-size: 1rem;
         }
         
-        .dashboard-widgets {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 20px;
-          margin-bottom: 20px;
-        }
-        
-        .widget {
-          background: white;
-          padding: 20px;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-          cursor: pointer;
-        }
-        
-        .widget:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        }
-        
-        .widget-icon {
-          font-size: 2rem;
-        }
-        
-        .widget-info h3 {
-          margin: 0 0 5px 0;
-          color: #374151;
-          font-size: 0.9rem;
-          font-weight: 500;
-        }
-        
-        .widget-value {
-          margin: 0;
-          font-size: 1.5rem;
-          font-weight: bold;
-          color: #1f2937;
-        }
-        
-        .section {
-          background: white;
-          padding: 20px;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .section h2 {
-          margin: 0 0 15px 0;
-          color: #333;
-          font-size: 1.2rem;
+        .employees-grid-container {
+          flex: 1;
         }
         
         .employee-cards {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 15px;
+          gap: 20px;
         }
         
         .employee-card {
           background: white;
-          padding: 15px;
+          padding: 20px;
           border-radius: 8px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -518,29 +344,30 @@ function AdminDashboard() {
         
         .employee-avatar {
           position: relative;
-          width: 50px;
-          height: 50px;
+          width: 60px;
+          height: 60px;
           border-radius: 50%;
           background: #2563eb;
           display: flex;
           align-items: center;
           justify-content: center;
-          float: left;
-          margin-right: 15px;
+          margin: 0 auto 15px;
+          font-size: 1.2rem;
+          color: white;
         }
         
         .employee-info {
-          overflow: hidden;
+          text-align: center;
         }
         
         .employee-info h3 {
-          margin: 0 0 5px 0;
+          margin: 0 0 8px 0;
           color: #333;
           font-size: 1.1rem;
         }
         
         .employee-info p {
-          margin: 0 0 3px 0;
+          margin: 0 0 4px 0;
           color: #7f8c8d;
           font-size: 0.9rem;
         }
@@ -548,94 +375,18 @@ function AdminDashboard() {
         .employee-info .department {
           color: #95a5a6;
           font-style: italic;
+          font-size: 0.85rem;
         }
         
         .status-indicator {
           position: absolute;
-          bottom: 0;
-          right: 0;
-          width: 14px;
-          height: 14px;
+          top: -5px;
+          right: -5px;
+          width: 20px;
+          height: 20px;
           border-radius: 50%;
           border: 2px solid white;
-        }
-        
-        .activity-list {
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-        }
-        
-        .activity-item {
-          display: flex;
-          gap: 10px;
-          padding: 10px 0;
-          border-bottom: 1px solid #f1f5f9;
-        }
-        
-        .activity-item:last-child {
-          border-bottom: none;
-        }
-        
-        .activity-icon {
-          font-size: 1.2rem;
-        }
-        
-        .activity-details p {
-          margin: 0 0 3px 0;
-          color: #374151;
-          font-size: 0.9rem;
-        }
-        
-        .activity-time {
-          color: #9ca3af;
-          font-size: 0.8rem;
-        }
-        
-        .events-list {
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-        }
-        
-        .event-item {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          padding: 10px 0;
-          border-bottom: 1px solid #f1f5f9;
-        }
-        
-        .event-item:last-child {
-          border-bottom: none;
-        }
-        
-        .event-date {
-          background: #e0e7ff;
-          color: #4f46e5;
-          width: 40px;
-          height: 40px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          font-size: 1rem;
-        }
-        
-        .event-details {
-          flex: 1;
-        }
-        
-        .event-details p {
-          margin: 0 0 3px 0;
-          color: #374151;
-          font-size: 0.95rem;
-        }
-        
-        .event-time {
-          color: #9ca3af;
-          font-size: 0.8rem;
+          box-shadow: 0 0 0 2px white;
         }
         
         @media (max-width: 768px) {
@@ -658,14 +409,17 @@ function AdminDashboard() {
             font-size: 0.8rem;
           }
           
-          .dashboard-layout {
-            grid-template-columns: 1fr;
+          .employee-cards {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
           }
           
-          .dashboard-widgets {
-            grid-template-columns: 1fr;
+          .dashboard-content-admin {
+            padding: 15px;
           }
-          
+        }
+        
+        @media (max-width: 480px) {
           .employee-cards {
             grid-template-columns: 1fr;
           }
@@ -675,4 +429,4 @@ function AdminDashboard() {
   );
 }
 
-export default AdminDashboard;
+export default AdminEmployees;

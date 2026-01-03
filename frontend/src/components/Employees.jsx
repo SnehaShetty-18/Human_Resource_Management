@@ -59,9 +59,9 @@ function Employees() {
   };
 
   const handleProfileClick = () => {
-    // Don't close the dropdown, just show personal info
-    // In a real app, this would navigate to the profile page
-    console.log('My Profile clicked - would navigate to profile page');
+    setShowProfileDropdown(false);
+    // Navigate to the profile page
+    navigate('/employee/profile');
   };
 
   const handleLogout = () => {
